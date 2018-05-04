@@ -1,0 +1,17 @@
+certifi==2017.7.27.1
+chardet==3.0.4
+Django==1.11.6
+django-redis-cache==1.7.1
+funcsigs==1.0.2
+idna==2.6
+python-interface==1.2.0
+pytz==2017.3
+redis==2.10.6
+requests==2.18.4
+six==1.11.0
+typing==3.6.2
+urllib3==1.22
+gunicorn==19.6.0
+psycopg2==2.6.2
+whitenoise==3.3.1
+djangorestframework==3.7.7

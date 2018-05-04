@@ -1,2 +1,2 @@
 release: python manage.py migrate
-web: gunicorn mlivwebapp.wsgi --log-file -
+web: gunicorn mafias.wsgi --log-file -

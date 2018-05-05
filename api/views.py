@@ -59,7 +59,7 @@ def addRoles(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
+        response = generateStatusJson('error', 'Game not found')
 
     return HttpResponse(response, content_type='application/json')
 
@@ -80,7 +80,7 @@ def addPlayer(request):
                     print data
                     gameObj.playerDetails = json.dumps(data)
                     gameObj.save()
-                    response = generateStatusJson('id', playerName)
+                    response = generateStatusJson('success', playerName)
                 else:
                     response = generateStatusJson('error', 'Player already available')
             else:
@@ -89,7 +89,7 @@ def addPlayer(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
+        response = generateStatusJson('error', 'Game not found')
 
     return HttpResponse(response, content_type='application/json')
 
@@ -126,7 +126,7 @@ def assignRoles(request):
             response = generateStatusJson('error', 'Game not found')
 
     except Exception as e:
-        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
+        response = generateStatusJson('error', 'Game not found')
 
     return HttpResponse(response, content_type='application/json')
 
@@ -152,7 +152,7 @@ def getRole(request):
             response = generateStatusJson('error', 'Game not found')
 
     except Exception as e:
-        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
+        response = generateStatusJson('error', 'Game not found')
 
     return HttpResponse(response, content_type='application/json')
 
@@ -178,10 +178,36 @@ def resetGame(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
+        response = generateStatusJson('error', 'Game not found')
 
     return HttpResponse(response, content_type='application/json')
 
+def leaveGame(request):
+    response = {}
+    reqMethod = getPostOrGetRequest(request)
+    gameName = reqMethod.get("gameName")
+    playerName = reqMethod.get("playerId")
+    try:
+        gameObj = Game.objects.filter(name=gameName)[0]
+        if gameObj:
+            playerDetails = gameObj.playerDetails
+            data = json.loads(playerDetails)
+
+            if (playerDetails.__contains__(str(playerName))):
+                del data[playerName]
+                gameObj.playerDetails = json.dumps(data)
+                gameObj.save()
+                response = generateStatusJson('success', "player deleted")
+            else:
+                response = generateStatusJson('error', 'Player not available')
+
+        else:
+            response = generateStatusJson('error', 'Game not found')
+
+    except  Exception as e:
+        response = generateStatusJson('error', 'Game not found')
+
+    return HttpResponse(response, content_type='application/json')
 
 # to be moved to framework
 def getPostOrGetRequest(request):

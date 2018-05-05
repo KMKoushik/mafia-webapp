@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^api/assignRoles/$', views.assignRoles, name='assignRoles'),
     url(r'^api/getRole/$', views.getRole, name='assignRoles'),
     url(r'^api/resetGame/$', views.resetGame, name='assignRoles'),
+    url(r'^api/leaveGame/$', views.leaveGame, name='leaveGame'),
 ]

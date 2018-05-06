@@ -160,12 +160,9 @@ def getRole(request):
             playerDetails = gameObj.playerDetails
             playerdata = json.loads(playerDetails)
             if(playerDetails.__contains__(playerId)):
-                if(playerdata[playerId]==0):
-                    response = generateStatusJson('error', 'Roles not assigned')
-                else:
-                    playerDict = {}
-                    playerDict['role'] =playerdata[playerId]
-                    response = generateStatusJson('success', playerDict)
+                playerDict = {}
+                playerDict['role'] =playerdata[playerId]
+                response = generateStatusJson('success', playerDict)
             else:
                 response = generateStatusJson('error', 'Player not found')
         else:

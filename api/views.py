@@ -4,6 +4,7 @@ from django.http import HttpResponse
 
 import json
 
+from api import mafiaConstants
 from api.models import Game
 
 
@@ -17,14 +18,15 @@ def createNewGame(request):
     gameName = reqMethod.get("gameName")
     player = reqMethod.get("playerCount")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             gameObj.player = player
             gameObj.save()
             response = generateStatusJson('success', 'Game updated successfully')
 
         else:
-            gameObj = Game(name=gameName, player=player)
+            gameObj = Game(name=gameName, player=player ,roles='{}',playerDetails='{}')
             gameObj.save()
             response = generateStatusJson('success', 'Game created successfully')
 
@@ -40,9 +42,10 @@ def addRoles(request):
     gameName = reqMethod.get("gameName")
     roles = reqMethod.get("roles")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         print roles
         if gameObj:
+            gameObj = gameObj[0]
             data = json.loads(roles)
             total = 0
             for item in data:
@@ -59,7 +62,7 @@ def addRoles(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
 
@@ -70,17 +73,20 @@ def addPlayer(request):
     gameName = reqMethod.get("gameName")
     playerName = reqMethod.get("playerName")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             playerDetails = gameObj.playerDetails
             data = json.loads(playerDetails)
             if(gameObj.player > len(data)):
                 if(not playerDetails.__contains__(str(playerName))):
-                    data[playerName] = ""
+                    data[playerName] = 0
                     print data
                     gameObj.playerDetails = json.dumps(data)
                     gameObj.save()
-                    response = generateStatusJson('success', playerName)
+                    playerDict = {}
+                    playerDict["id"] = playerName
+                    response = generateStatusJson('success', playerDict)
                 else:
                     response = generateStatusJson('error', 'Player already available')
             else:
@@ -89,44 +95,55 @@ def addPlayer(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
 
 
 def assignRoles(request):
+
     response = {}
     reqMethod = getPostOrGetRequest(request)
     gameName = reqMethod.get("gameName")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             playerDetails = gameObj.playerDetails
             playerdata = json.loads(playerDetails)
             if len(playerdata) == gameObj.player:
                 roles = gameObj.roles
                 data = json.loads(roles)
-                randomList = []
+                total = 0
                 for item in data:
                     val = data[item]
-                    for i in range(0,int(val)):
-                        randomList.append(item)
-                random.shuffle(randomList)
+                    total = total + int(val)
 
-                i=0
-                for item in playerdata:
-                    playerdata[item] = randomList.__getitem__(i)
-                    i=i+1
-                gameObj.playerDetails = json.dumps(playerdata)
-                gameObj.save()
-                response = generateStatusJson('success', 'Roles assigned')
+                if (total == gameObj.player):
+                    randomList = []
+                    for item in data:
+                        val = data[item]
+                        for i in range(0,int(val)):
+                            randomList.append(item)
+                    random.shuffle(randomList)
+
+                    i=0
+                    for item in playerdata:
+                        playerdata[item] =int(randomList.__getitem__(i))
+                        i=i+1
+                    gameObj.playerDetails = json.dumps(playerdata)
+                    gameObj.save()
+                    response = generateStatusJson('success', 'Roles assigned')
+                else:
+                    response = generateStatusJson('error', 'Roles not added')
+
             else:
                 response = generateStatusJson('error', 'Players not enough')
         else:
             response = generateStatusJson('error', 'Game not found')
 
     except Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
 
@@ -137,22 +154,25 @@ def getRole(request):
     gameName = reqMethod.get("gameName")
     playerId = reqMethod.get("playerId")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             playerDetails = gameObj.playerDetails
             playerdata = json.loads(playerDetails)
             if(playerDetails.__contains__(playerId)):
-                if(playerdata[playerId]==""):
+                if(playerdata[playerId]==0):
                     response = generateStatusJson('error', 'Roles not assigned')
                 else:
-                    response = generateStatusJson('success', playerdata[playerId])
+                    playerDict = {}
+                    playerDict['role'] =playerdata[playerId]
+                    response = generateStatusJson('success', playerDict)
             else:
                 response = generateStatusJson('error', 'Player not found')
         else:
             response = generateStatusJson('error', 'Game not found')
 
     except Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
 
@@ -164,12 +184,13 @@ def resetGame(request):
     gameName = reqMethod.get("gameName")
     player = reqMethod.get("playerCount")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             playerDetails = gameObj.playerDetails
             playerdata = json.loads(playerDetails)
             for item in playerdata:
-                playerdata[item] = ""
+                playerdata[item] = 0
             gameObj.playerDetails = json.dumps(playerdata)
             gameObj.save()
             response = generateStatusJson('success', 'Game reseted successfully')
@@ -178,9 +199,10 @@ def resetGame(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
+
 
 def leaveGame(request):
     response = {}
@@ -188,8 +210,9 @@ def leaveGame(request):
     gameName = reqMethod.get("gameName")
     playerName = reqMethod.get("playerId")
     try:
-        gameObj = Game.objects.filter(name=gameName)[0]
+        gameObj = Game.objects.filter(name=gameName)
         if gameObj:
+            gameObj = gameObj[0]
             playerDetails = gameObj.playerDetails
             data = json.loads(playerDetails)
 
@@ -205,9 +228,11 @@ def leaveGame(request):
             response = generateStatusJson('error', 'Game not found')
 
     except  Exception as e:
-        response = generateStatusJson('error', 'Game not found')
+        response = generateStatusJson('error', e.message.encode('ascii', 'ignore').strip())
 
     return HttpResponse(response, content_type='application/json')
+
+
 
 # to be moved to framework
 def getPostOrGetRequest(request):

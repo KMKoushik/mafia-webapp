@@ -1,6 +1,6 @@
 certifi==2017.7.27.1
 chardet==3.0.4
-Django==1.11.6
+Django==1.11.23
 django-redis-cache==1.7.1
 funcsigs==1.0.2
 idna==2.6
